@@ -31,6 +31,16 @@ def save_thank_you_letter(id,form_letter)
   end
 end
 
+def clean_phone_number(phone_number)
+  if phone_number.to_s.size == 10
+    phone_number.to_s
+  elsif phone_number.to_s == 11
+    phone_number.to_s[0] == "1" ? phone_number.to_s[1..-1] : "0000000000"
+  else
+    "0000000000"
+  end
+end
+
 puts 'EventManager initialized.'
 
 contents = CSV.open(
