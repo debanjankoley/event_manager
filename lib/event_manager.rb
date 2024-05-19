@@ -2,6 +2,7 @@ require 'csv'
 require 'google/apis/civicinfo_v2'
 require 'erb'
 require 'time'
+require 'date'
 
 def clean_zipcode(zipcode)
   zipcode.to_s.rjust(5,"0")[0..4]
@@ -54,6 +55,7 @@ template_letter = File.read('form_letter.erb')
 erb_template = ERB.new template_letter
 
 no_of_regs_at_hours = Hash.new(0)
+reg_days = Array.new
 contents.each do |row|
   id = row[0]
   name = row[:first_name]
@@ -67,13 +69,29 @@ contents.each do |row|
   reg_date = row[:regdate]
   reg_hour = Time.strptime(reg_date, "%m/%d/%Y %k:%M").hour.to_s + ":00"
   no_of_regs_at_hours[reg_hour] += 1
+
+  reg_day = Date.strptime(reg_date, "%m/%d/%Y %k:%M").wday
+  reg_days << reg_day
 end
 
 def time_targeting(reg_hours)
   sorted_hash = reg_hours.sort_by { |k,v| -v }
-  most_registrations = []
-  sorted_hash.each { |k,v| most_registrations << k if v == sorted_hash.first[1] }
-  puts "Peak registration hours are #{most_registrations.join(", ")}."
+  peak_hours = []
+  sorted_hash.each { |k,v| peak_hours << k if v == sorted_hash.first[1] }
+  puts "Peak registration hours -- #{peak_hours.join(", ")}."
+end
+
+def day_targeting(reg_days)
+  weekdays = {0=>"Sunday", 1=>"Monday", 2=>"Tuesday", 3=>"Wednesday", 4=>"Thursday", 5=>"Friday", 6=>"Saturday"}
+  days_hash = Hash.new(0)
+  reg_days.each { |day| days_hash[day] += 1 }
+  sorted_hash = days_hash.sort_by{ |k,v| -v }
+  peak_days_num = []
+  peak_days = []
+  sorted_hash.each { |k,v| peak_days_num << k if v == sorted_hash.first[1] }
+  peak_days_num.each { |num| peak_days << weekdays[num] }
+  puts "Peak registration days -- #{peak_days.join(", ")}."
 end
 
 time_targeting(no_of_regs_at_hours)
+day_targeting(reg_days)
